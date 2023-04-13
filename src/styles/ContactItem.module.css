@@ -1,0 +1,16 @@
+.contactItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 50px;
+    padding: 0 10px;
+    transition: .2s;
+    margin-bottom: 10px;
+}
+
+@media (min-width: 768px) {
+    .contactItem:hover {
+        transform: scale(1.1);
+    }
+}
+

@@ -1,0 +1,38 @@
+.main {
+    padding: 4em;
+}
+
+.main .section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 1rem 0 1rem;
+}
+
+.main .section .aboutMe {
+    max-width: 1000px;
+    margin-top: 20px;
+    font-size: 20px;
+    text-align: justify;
+}
+
+.main .section .photo {
+    width: 200px;
+    height: auto;
+    filter: grayscale(100%);
+    transition: .2s;
+}
+
+.main .section .photo:hover {
+    filter: none;
+}
+
+@media screen and (max-width: 768px) {
+    .main .section {
+        padding: 1rem 0 0 0;
+    }
+    .main .section .photo {
+        filter: none;
+    }
+}
