@@ -1,0 +1,26 @@
+# Development override: runs `next dev` and syncs source edits into the
+# container for hot reload.
+#   docker compose -f compose.yaml -f compose.dev.yaml watch
+services:
+  app:
+    image: onurravli-com-dev
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+    healthcheck:
+      disable: true
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: pnpm-lock.yaml
+        - action: rebuild
+          path: prisma/schema.prisma

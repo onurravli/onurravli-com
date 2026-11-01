@@ -1,0 +1,121 @@
+# Full stack: the production app image plus every backing service.
+#   docker compose up --build
+# Secrets (auth, admin login, Resend, GitHub) come from .env; see .env.example.
+
+x-backing-env: &backing-env
+  DATABASE_URL: postgresql://postgres:postgres@postgres:5432/onurravli
+  CLICKHOUSE_HOST: http://clickhouse:8123
+  CLICKHOUSE_USERNAME: default
+  CLICKHOUSE_PASSWORD: clickhouse
+  CLICKHOUSE_DATABASE: analytics
+  UPSTASH_REDIS_REST_URL: http://redis-http:80
+  UPSTASH_REDIS_REST_TOKEN: local_dev_token
+
+services:
+  app:
+    build:
+      context: .
+      target: runner
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backing-env
+      # Auth.js builds its redirects from this; inside the container the
+      # request host is 0.0.0.0.
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      clickhouse:
+        condition: service_healthy
+      redis-http:
+        condition: service_started
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/onurravli
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: onurravli
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d onurravli"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8-alpine
+    environment:
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8123:8123"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "clickhouse-client",
+          "--password",
+          "clickhouse",
+          "--query",
+          "SELECT 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Upstash-compatible REST API in front of the local Redis, so the app talks
+  # to it exactly as it talks to Upstash in production.
+  redis-http:
+    image: hiett/serverless-redis-http:0.0.10
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: local_dev_token
+      SRH_CONNECTION_STRING: redis://redis:6379
+    ports:
+      - "8079:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  clickhouse-data:
+  redis-data:
