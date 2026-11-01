@@ -1,0 +1,95 @@
+---
+title: "Voltran: One Window for All My Coding Agents"
+description: "I kept losing track of which agent was waiting on me, so I built a local control room for running many coding agents and terminals at once."
+date: "2026-10-25"
+tags: ["voltran", "open-source", "developer-tools", "ai-agents", "claude-code"]
+images: ["/blog/voltran/cover.webp"]
+---
+
+Somewhere this year, my terminal turned into a waiting room.
+
+One Claude Code session was refactoring a handler. Another was chasing a flaky test. Codex was planning a database upgrade in a third tab, and a dev server and a webhook listener were scrolling away in two more. Each agent works on its own for minutes at a time, which is the whole point. But sooner or later, every one of them stops and waits for me.
+
+And I never knew which one.
+
+I'd click through tabs to find the agent that had been sitting on a permission prompt for ten minutes, while the one that had finished its work sat there, also unnoticed. The agents had become fast. I had become the bottleneck.
+
+So I built **[Voltran](https://github.com/onurravli/voltran)**: a local control room for running many coding agents and terminals at once.
+
+![Voltran showing a Claude Code session as a conversation, next to its subagent, a shell and a webhook listener, in the dark and light themes](/blog/voltran/main.webp)
+
+## What it is
+
+Voltran is one window that holds all of your work, organized the way you actually think about it:
+
+- **Projects** are the folders and repositories you work in.
+- **Sessions** are pieces of work inside a project: a ticket, a branch, an investigation.
+- **Panes** are the terminals inside a session, split however you like. A pane runs an agent (Claude Code, Codex, OpenCode, Antigravity), a shell, or a command like `npm run dev`.
+
+It works with any folder and any agent CLI. Nothing about your setup changes: the agents are the same programs you already run, in real terminals.
+
+## The one question it answers: who needs me?
+
+This is the feature everything else is built around.
+
+Voltran knows what each agent is doing. Claude Code reports its status through hooks, OpenCode through a small plugin Voltran gives it, and Codex through hooks you trust once. Any other program gets a status from its terminal activity.
+
+The sidebar shows every session with its state, and a **Needs you** panel collects the ones waiting on you: a permission prompt, a question, or a finished task you haven't looked at yet.
+
+![The sidebar, with sessions across three projects and a Needs you panel listing two permission prompts and a finished task](/blog/voltran/sidebar.webp)
+
+Instead of hunting through tabs, I glance at one list. When an agent asks for something, I answer it, and it goes back to work.
+
+## Read the conversation, not just the terminal
+
+Agent CLIs draw rich interfaces in the terminal, but a long session is hard to scroll back through. Voltran can show a Claude Code pane's conversation as messages: your prompts, the agent's replies rendered as markdown, every tool call, its plan, and the diffs of its edits, which open on click.
+
+![A Claude Code pane shown as a conversation, with a prompt, a markdown reply, a plan with checked items and a list of tool calls](/blog/voltran/conversation.webp)
+
+The terminal stays underneath, still running, with its size untouched. One click switches back, and you can type to the agent from either view.
+
+## Everything else around the agent
+
+A few things I added because I kept leaving Voltran to do them somewhere else:
+
+**Notes next to every pane.** Each pane has a small notebook that you and the agent share. It survives restarts and compaction, so decisions and next steps don't disappear with the context window. The agent reads it when it starts and keeps it up to date as it works.
+
+![A Claude Code terminal with the notes drawer open beside it, listing decisions and a checklist the agent keeps current](/blog/voltran/terminal-notes.webp)
+
+**Git, without leaving the window.** Each session shows its branch, the commits to push and pull, the changed files and, through the GitHub CLI, its pull request with its checks. ⌃⌥G opens the changes as a side-by-side diff.
+
+![The changes view: a list of changed files and a side-by-side diff of handler.go](/blog/voltran/changes.webp)
+
+**Workspaces.** Sometimes the work that belongs together lives in different projects: an agent in the API, another in the dashboard, a third in the infrastructure repo. A workspace puts panes from any project side by side on one screen, while they keep running in their own sessions.
+
+![A workspace showing Claude Code, OpenCode and Codex panes from three different projects side by side](/blog/voltran/workspace.webp)
+
+There's more: worktrees for sessions that need a branch of their own, subagent tracking, a command palette, a preview pane for local pages, and an installable app window that lives in your Dock.
+
+## How it works
+
+Voltran is a Node daemon that owns every terminal, with a React web UI on top. Because the daemon holds the processes, closing the window stops nothing. Agents keep running, and they resume where they left off after a restart.
+
+Everything stays on your computer. The daemon listens only on `127.0.0.1`, checks a token or a signed browser credential on every request, and keeps its state in SQLite under `~/.voltran`.
+
+## Try it
+
+Voltran runs on macOS and Linux (and Windows through WSL2), with Node.js 22.18 or newer:
+
+```bash
+brew install onurravli/tap/voltran
+voltran up
+```
+
+Or with npm:
+
+```bash
+npm install -g --allow-scripts=voltran,node-pty voltran
+voltran up
+```
+
+`voltran up` starts the daemon and opens a window. From any folder, `voltran new` opens a session there with a Claude Code pane.
+
+Voltran is open source. If you run more than one agent at a time, I'd love to hear how it fits your workflow: open an issue, send a pull request, or just tell me what's missing.
+
+**[github.com/onurravli/voltran](https://github.com/onurravli/voltran)**

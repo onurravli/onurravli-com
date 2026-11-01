@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Singleton row (id = "settings") holding site-wide copy and appearance.
+model SiteSettings {
+  id                     String   @id @default("settings")
+  accentColor            String   @default("circula")
+  name                   String   @default("Onur Ravli")
+  title                  String   @default("Full-Stack Developer")
+  description            String   @default("Full-stack developer building scalable systems with TypeScript, Node.js and React.")
+  heroPrimaryCtaText     String   @default("")
+  heroPrimaryCtaHref     String   @default("")
+  heroPrimaryCtaTarget   String   @default("_self")
+  heroSecondaryCtaText   String   @default("")
+  heroSecondaryCtaHref   String   @default("")
+  heroSecondaryCtaTarget String   @default("_self")
+  imagePath              String   @default("https://avatars.githubusercontent.com/u/47084109")
+  heroShowImage          Boolean  @default(true)
+  footerCopyright        String   @default("Made with ❤️ by Onur Ravli.")
+  opengraphSubtitle      String   @default("Available for collaboration")
+  updatedAt              DateTime @updatedAt
+}
+
+model SocialLink {
+  id        Int    @id @default(autoincrement())
+  label     String
+  href      String
+  iconName  String
+  target    String @default("_blank")
+  sortOrder Int    @default(0)
+}
+
+model ProjectRepo {
+  id        Int    @id @default(autoincrement())
+  repo      String
+  sortOrder Int    @default(0)
+}
+
+model ExperienceEntry {
+  id             Int      @id @default(autoincrement())
+  companyName    String
+  companyWebsite String   @default("")
+  position       String
+  location       String   @default("")
+  startDate      String
+  endDate        String
+  icon           String   @default("🚀")
+  notes          String[]
+  technologies   String[]
+  sortOrder      Int      @default(0)
+}
+
+model SkillCategory {
+  id        Int      @id @default(autoincrement())
+  title     String
+  skills    String[]
+  sortOrder Int      @default(0)
+}
+
+model EducationEntry {
+  id         Int      @id @default(autoincrement())
+  school     String
+  degree     String
+  department String
+  startDate  String
+  endDate    String
+  location   String   @default("")
+  notes      String[]
+  sortOrder  Int      @default(0)
+}
+
+model RecommendationEntry {
+  id              Int    @id @default(autoincrement())
+  personName      String
+  personTitle     String @default("")
+  personCompany   String @default("")
+  personAvatarUrl String @default("")
+  body            String
+  date            String @default("")
+  sortOrder       Int    @default(0)
+}
+
+model BlogPost {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  description String   @default("")
+  date        String
+  tags        String[]
+  images      String[]
+  content     String   @default("")
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
