@@ -1,6 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { SocialLinks } from "@/components/site/social-links";
 import type { ExperienceEntry, SocialLink } from "@/lib/content";
 import type { SiteSettings } from "@/lib/settings";
@@ -18,6 +17,10 @@ function toCta(text: string, href: string, target: string): Cta | null {
 
 const isCvHref = (href: string) => /\/cv|\.pdf$/i.test(href);
 
+/**
+ * A plain anchor, not next/link: CTAs point at sections, files (the CV) or
+ * other sites, and prefetching a file as a route fails.
+ */
 function CtaLink({
 	cta,
 	variant,
@@ -30,7 +33,7 @@ function CtaLink({
 	const external = cta.target === "_blank";
 
 	return (
-		<Link
+		<a
 			href={cta.href}
 			target={cta.target}
 			rel={external ? "noopener noreferrer" : undefined}
@@ -47,7 +50,7 @@ function CtaLink({
 		>
 			{cta.text}
 			{external && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
-		</Link>
+		</a>
 	);
 }
 
